@@ -1,19 +1,22 @@
 import { Router } from "express";
-import { createUser } from "../controllers/userController";
+import { createUser, loginUser } from "../controllers/userController";
+import { authenticateToken } from "../middlewares/authMiddleware";
 
 const router = Router();
 
-router.post("/users", createUser);
+router.post("/users", async (req, res) => {
+  await createUser(req, res);
+});
 
-export default router;
-import { loginUser } from "../controllers/userController";
+router.post("/login", async (req, res) => {
+  await loginUser(req, res);
+});
 
-router.post("/login", loginUser);
-import { authenticateToken } from "../middlewares/authMiddleware";
-
-router.get("/profile", authenticateToken, (req, res) => {
-  return res.json({
+router.get("/profile", authenticateToken, async (req, res) => {
+  res.json({
     message: "Rota protegida acessada com sucesso!",
-    user: req.user,
+    userId: req.userId,
   });
 });
+
+export default router;

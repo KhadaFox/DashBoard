@@ -1,7 +1,10 @@
 import express from "express";
-import cors from "cors";
+import userRoutes from "../src/routes/userRoutes";
+import transactionRoutes from "../src/routes/transactionRoutes";
 import dotenv from "dotenv";
-import userRoutes from "./routes/userRoutes"; // caminho relativo correto
+import cors from "cors";
+import authRoutes from "./routes/authRoutes";
+
 
 dotenv.config();
 
@@ -9,9 +12,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use("/api", userRoutes); // /api/users
+// Caminhos base corrigidos
+app.use("/api", userRoutes);
+app.use("/api/transactions", transactionRoutes);
+app.use(express.json());
+app.use("/auth", authRoutes);
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
+app.listen(3333, () => {
+  console.log("Servidor rodando na porta 3333");
 });
