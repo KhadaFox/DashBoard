@@ -1,4 +1,5 @@
-import './style.css'
+import 'bootstrap/dist/css/bootstrap.min.css';
+import './styles.css';
 import typescriptLogo from './typescript.svg'
 import viteLogo from '/vite.svg'
 import { setupCounter } from './counter.ts'
