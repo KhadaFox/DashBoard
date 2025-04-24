@@ -21,8 +21,10 @@ model Transaction {
   title     String
   amount    Float
   type      String
+  categoria String   @default("Outros")// ⬅️ Adicionado aqui
   createdAt DateTime @default(now())
   userId    Int
   user      User     @relation(fields: [userId], references: [id])
 }
+
 

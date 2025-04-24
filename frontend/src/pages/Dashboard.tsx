@@ -1,6 +1,10 @@
+
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import TransactionModal from '../components/TransactionModal';
+import profileImg from '../assets/User.jpeg';
+import logo from '../assets/logo-dashboard-branco.png';
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 interface Transaction {
   id: number;
@@ -14,23 +18,18 @@ const Dashboard = () => {
   const [userName, setUserName] = useState('');
   const [saldo, setSaldo] = useState(0);
   const [transacoes, setTransacoes] = useState<Transaction[]>([]);
-  const [showModal, setShowModal] = useState(false);
-
-  const handleSuccess = () => {
-    carregarTransacoes();
-    setShowModal(false);
-  };
 
   const carregarTransacoes = () => {
     const token = localStorage.getItem('token');
     if (!token) return;
 
     axios
-      .get('http://localhost:3333/transacoes', {
+      .get('http://localhost:3333/transactions', {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
         setTransacoes(res.data);
+
         const saldoCalculado = res.data.reduce((acc: number, trans: Transaction) => {
           return trans.tipo === 'entrada' ? acc + trans.valor : acc - trans.valor;
         }, 0);
@@ -61,68 +60,176 @@ const Dashboard = () => {
     }
   }, []);
 
+  const receitas = transacoes.filter(t => t.tipo === 'entrada');
+  const despesas = transacoes.filter(t => t.tipo === 'saida');
+
+  const receitaMensal = receitas.reduce((acc, t) => acc + t.valor, 0);
+  const despesaMensal = despesas.reduce((acc, t) => acc + t.valor, 0);
+
   return (
-    <div className="container my-5 p-4 rounded-4 shadow bg-body">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h2 className="fw-bold">Bem-vindo, <span className="text-primary">{userName || 'usuário'}</span>!</h2>
-          <p className="text-muted">Este é o seu painel de controle financeiro.</p>
+    <>
+      {/* Navbar */}
+      <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-4">
+        <a href="#"><img src={logo} alt='Logo' style={{ height: '42px' }} /></a>
+        <div className="ms-auto d-flex align-items-center">
+          <span className="text-white me-3">{userName}</span>
+          <img src={profileImg} alt="Perfil" width="40" height="40" className="rounded-circle" />
         </div>
-        <button className="btn btn-success px-4 py-2 rounded-3 d-flex align-items-center gap-2" onClick={() => setShowModal(true)}>
-          <i className="bi bi-plus-circle"></i> Nova Transação
-        </button>
-      </div>
-  
-      {/* Saldo */}
-      <div className="card border-0 shadow-sm mb-4">
-        <div className="card-body">
-          <h5 className="card-title text-muted mb-2">Saldo Atual</h5>
-          <h3 className={`fw-bold ${saldo >= 0 ? 'text-success' : 'text-danger'}`}>
-            R$ {saldo.toFixed(2)}
-          </h3>
-        </div>
-      </div>
-  
-      {/* Transações */}
-      <h4 className="fw-semibold text-secondary mb-3">Transações</h4>
-      {transacoes.length === 0 ? (
-        <div className="alert alert-light border text-muted">Você ainda não possui transações.</div>
-      ) : (
-        <ul className="list-group">
-          {transacoes.map((trans) => (
-            <li
-              key={trans.id}
-              className="list-group-item d-flex justify-content-between align-items-center border-0 mb-2 rounded-3 shadow-sm px-3 py-3"
+      </nav>
+
+      <div className="container my-5">
+        <div className="row align-items-center mb-5">
+          <div className="col-md-6 d-flex align-items-center gap-4">
+            <img src={profileImg} alt="Perfil" width="80" height="80" className="rounded-circle shadow" />
+            <div>
+              <h4 className="fw-bold mb-0">Olá, {userName}!</h4>
+              <small className="text-muted">Gerencie suas finanças de forma prática.</small>
+            </div>
+          </div>
+          <div className="col-md-6 d-flex flex-column align-items-md-end align-items-start mt-4 mt-md-0">
+            <div>
+              <h5 className="text-muted">Saldo Atual</h5>
+              <h3 className={`fw-bold ${saldo >= 0 ? 'text-success' : 'text-danger'}`}>
+                R$ {saldo.toFixed(2)}
+              </h3>
+            </div>
+            <button
+              className="btn btn-primary mt-2 px-3 py-1"
+              data-bs-toggle="modal"
+              data-bs-target="#inserirSaldoModal"
             >
-              <div>
-                <h6 className="mb-1">{trans.descricao}</h6>
-                <small className="text-muted">{new Date(trans.data).toLocaleDateString()}</small>
-              </div>
-              <div className="text-end">
-                <span className={`fw-semibold ${trans.tipo === 'entrada' ? 'text-success' : 'text-danger'}`}>
-                  {trans.tipo === 'entrada' ? '+' : '-'} R$ {trans.valor.toFixed(2)}
-                </span>
-                <div>
-                  <span className={`badge bg-${trans.tipo === 'entrada' ? 'success' : 'danger'} ms-2`}>
-                    {trans.tipo}
-                  </span>
+              Inserir Saldo
+            </button>
+          </div>
+        </div>
+
+        {/* Receita e Despesa */}
+        <div className="row mb-4">
+          <div className="col-md-6">
+            <div className="card border-0 shadow-sm p-3">
+              <h6 className="text-muted">Receita Mensal</h6>
+              <h4 className="text-success">R$ {receitaMensal.toFixed(2)}</h4>
+            </div>
+          </div>
+          <div className="col-md-6 mt-3 mt-md-0">
+            <div className="card border-0 shadow-sm p-3">
+              <h6 className="text-muted">Despesa Mensal</h6>
+              <h4 className="text-danger">R$ {despesaMensal.toFixed(2)}</h4>
+            </div>
+          </div>
+        </div>
+
+        {/* Modalidades de despesa */}
+        <div>
+          <h5 className="mb-3 text-muted">Modalidades de Despesa</h5>
+          <div className="row g-3">
+            {['Investimentos', 'Educação', 'Pet', 'Alimentação', 'Outros'].map((categoria) => (
+              <div key={categoria} className="col-md-4">
+                <div className="card border-0 shadow-sm p-3">
+                  <h6 className="mb-0">{categoria}</h6>
+                  <small className="text-muted">Resumo da categoria</small>
                 </div>
               </div>
-            </li>
-          ))}
-        </ul>
-      )}
-  
-      {/* Modal */}
-      {showModal && (
-        <TransactionModal
-          show={showModal}
-          onClose={() => setShowModal(false)}
-          onSuccess={handleSuccess}
-        />
-      )}
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Modal de Inserir Saldo */}
+<div className="modal fade" id="inserirSaldoModal" tabIndex={-1} aria-labelledby="inserirSaldoLabel" aria-hidden="true">
+  <div className="modal-dialog">
+    <div className="modal-content">
+      <div className="modal-header">
+        <h5 className="modal-title" id="inserirSaldoLabel">Inserir Saldo</h5>
+        <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div className="modal-body">
+        <div className="mb-3">
+          <label htmlFor="valorSaldo" className="form-label">Valor</label>
+          <input type="number" className="form-control" id="valorSaldo" placeholder="Digite o valor" />
+        </div>
+        <div className="mb-3">
+          <label htmlFor="dataTransacao" className="form-label">Data</label>
+          <input type="date" className="form-control" id="dataTransacao" />
+        </div>
+        <div className="mb-3">
+          <label htmlFor="categoriaTransacao" className="form-label">Modalidade</label>
+          <select className="form-select" id="categoriaTransacao">
+            <option value="Outros">Outros</option>
+            <option value="Educação">Educação</option>
+            <option value="Investimentos">Investimentos</option>
+            <option value="Pet">Pet</option>
+            <option value="Alimentação">Alimentação</option>
+          </select>
+        </div>
+      </div>
+      <div className="modal-footer">
+        <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={async () => {
+            const valorInput = document.getElementById("valorSaldo") as HTMLInputElement;
+            const dataInput = document.getElementById("dataTransacao") as HTMLInputElement;
+            const categoriaInput = document.getElementById("categoriaTransacao") as HTMLSelectElement;
+          
+            const valor = parseFloat(valorInput.value);
+            const data = dataInput.value;
+            const categoria = categoriaInput.value;
+            const token = localStorage.getItem("token");
+          
+            if (!isNaN(valor) && data && categoria && token) {
+              try {
+                await axios.post(
+                  "http://localhost:3333/transactions",
+                  {
+                    title: "Saldo manual",
+                    amount: valor, // <-- correção aqui
+                    type: "entrada", // <-- correção aqui se o backend espera "tipo" e não "type"
+                    categoria,
+                    data
+                  },
+                  {
+                    headers: {
+                      Authorization: `Bearer ${token}`,
+                    },
+                  }
+                );
+          
+                carregarTransacoes();
+                valorInput.value = "";
+                dataInput.value = "";
+                categoriaInput.value = "Outros";
+          
+                const modalElement = document.getElementById("inserirSaldoModal");
+                interface BootstrapModal {
+                  hide: () => void;
+                }
+                
+                interface Bootstrap {
+                  Modal: new (element: Element) => BootstrapModal;
+                }
+                
+                const modal = new (window as unknown as { bootstrap: Bootstrap }).bootstrap.Modal(modalElement!);
+                modal.hide();
+              } catch (err) {
+                console.error("Erro ao inserir saldo:", err);
+              }
+            } else {
+              alert("Preencha todos os campos corretamente.");
+            }
+          }}
+          
+        >
+          Confirmar
+        </button>
+      </div>
     </div>
+  </div>
+</div>
+
+    </>
   );
-}
+};
 
 export default Dashboard;

@@ -6,17 +6,24 @@ interface AuthenticatedRequest extends Request {
 }
 
 export const createTransaction: RequestHandler = async (req, res) => {
-  const { title, amount, type } = req.body;
-  const userId = req.userId;
+  const { title, amount, type, categoria } = req.body;
+  const userId = (req as AuthenticatedRequest).userId;
 
   if (typeof userId !== "number") {
     res.status(400).json({ error: "ID do usuário inválido." });
     return;
   }
 
+  const categoriasPermitidas = ['Educação', 'Investimentos', 'Pet', 'Alimentação', 'Outros'];
+
+  if (!categoriasPermitidas.includes(categoria)) {
+    res.status(400).json({ error: "Categoria inválida." });
+    return;
+  }
+
   try {
     const transaction = await prisma.transaction.create({
-      data: { title, amount, type, userId },
+      data: { title, amount, type, categoria, userId },
     });
 
     res.status(201).json(transaction);
@@ -27,7 +34,7 @@ export const createTransaction: RequestHandler = async (req, res) => {
 };
 
 export const getTransactions: RequestHandler = async (req, res) => {
-  const userId = req.userId;
+  const userId = (req as AuthenticatedRequest).userId;
 
   if (typeof userId !== "number") {
     res.status(400).json({ error: "ID do usuário inválido." });
@@ -46,5 +53,3 @@ export const getTransactions: RequestHandler = async (req, res) => {
     res.status(500).json({ error: "Erro ao buscar transações" });
   }
 };
-
-
